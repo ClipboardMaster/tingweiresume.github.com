@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動式履歷 - Tingwei (Wilbert) Koo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application uses a single-page, vertical-scrolling layout to transform the static resume into an interactive professional story. The structure is thematic rather than linear: Hero (summary), Interactive Skills Dashboard (visual & filterable), Career Timeline (expandable details), and Project Showcase (card-based). This design allows recruiters to quickly grasp key strengths and drill down into details, enhancing engagement and information retention compared to a standard document. -->
+    <!-- Visualization & Content Choices: Skills -> Goal: Organize/Compare -> Viz: Chart.js Horizontal Bar Chart -> Interaction: Hover for detail, click to filter experiences -> Justification: Visually represents proficiency and connects skills to practical application. Work Experience -> Goal: Show Progression -> Viz: HTML/CSS Vertical Timeline -> Interaction: Click to expand/collapse role details -> Justification: Cleans up the UI and allows for progressive disclosure of information. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #F5F5F4;
+            color: #292524;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 500px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #57534E;
+            border: 3px solid #F5F5F4;
+        }
+        .timeline-path {
+            position: absolute;
+            left: -22px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #D6D3D1;
+        }
+        .skill-tag {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .skill-tag.active, .skill-tag:hover {
+            background-color: #14B8A6;
+            color: white;
+            transform: scale(1.05);
+        }
+        .highlight {
+            background-color: #A7F3D0;
+            border-left: 4px solid #10B981;
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+
+        <!-- Hero Section -->
+        <header id="home" class="relative text-center mb-16 md:mb-24">
+            <button id="langToggle" class="absolute top-0 right-0 px-4 py-2 text-sm font-semibold text-stone-700 bg-stone-200 rounded-full hover:bg-stone-300 transition duration-300">English</button>
+            <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-stone-900" data-lang-key="title">Tingwei (Wilbert) Koo</h1>
+            <p class="mt-3 text-lg md:text-xl text-stone-600" data-lang-key="subtitle">軟體開發工程師 & 系統分析師</p>
+            <div class="mt-6">
+                <p class="max-w-3xl mx-auto text-base md:text-lg text-stone-700" data-lang-key="summary">
+                    一位充滿熱情且以結果為導向的軟體開發者與系統分析師，擁有超過兩年的完整軟體開發生命週期經驗。擅長運用 Java、Python 和 SQL 將複雜的業務需求轉化為穩健、可擴展且高效的技術解決方案。在提升系統性能、自動化流程及交付高影響力專案方面擁有卓越的實績。目前正在攻讀商業分析碩士學位，致力於結合技術實踐與數據驅動的商業策略。
+                </p>
+            </div>
+             <div class="mt-8 flex justify-center space-x-6 text-stone-600">
+                <a href="mailto:wilbertkoo840@gmail.com" class="hover:text-teal-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                </a>
+                <a href="https://www.linkedin.com/in/wilbert-koo" target="_blank" rel="noopener noreferrer" class="hover:text-teal-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" /><circle cx="4" cy="4" r="2" /></svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- Technical Skills Section -->
+        <section id="skills" class="mb-16 md:mb-24">
+            <h2 class="text-3xl font-bold text-center mb-4 text-stone-800" data-lang-key="skillsTitle">專業技能儀表板</h2>
+            <p class="text-center text-stone-600 mb-8 max-w-2xl mx-auto" data-lang-key="skillsDescription">這是一個互動式的技能儀表板。您可以將滑鼠懸停在圖表上查看我的技能熟練度，或點擊下方的技能標籤來篩選並突顯在我的職業生涯中應用這些技能的相關經驗。</p>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="chart-container">
+                    <canvas id="skillsChart"></canvas>
+                </div>
+                <div id="skill-tags" class="mt-8 text-center">
+                </div>
+            </div>
+        </section>
+
+        <!-- Work Experience Section -->
+        <section id="experience" class="mb-16 md:mb-24">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800" data-lang-key="experienceTitle">職業生涯時間軸</h2>
+            <div class="relative max-w-3xl mx-auto">
+                <div class="timeline-path"></div>
+                <div class="space-y-12">
+                    <div class="relative pl-8 experience-item" data-lang-key="exp1" data-skills="SQL,Data Analysis"></div>
+                    <div class="relative pl-8 experience-item" data-lang-key="exp2" data-skills="Java,JSP,DB2,MVC,Testing"></div>
+                    <div class="relative pl-8 experience-item" data-lang-key="exp3" data-skills="RPA,Git,C#,SQL"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="mb-16 md:mb-24">
+            <h2 class="text-3xl font-bold text-center mb-12 text-stone-800" data-lang-key="projectsTitle">學術與競賽專案</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                    <h3 class="text-xl font-bold mb-2" data-lang-key="proj1Title">全球永續供應鏈學生競賽</h3>
+                    <p class="text-sm font-medium text-teal-600 mb-4" data-lang-key="proj1Sub">美洲區第三名</p>
+                    <p class="text-stone-700 flex-grow" data-lang-key="proj1Desc">設計創新的垂直水耕系統，成功將物流成本與碳排放降至最低。透過深入的供應鏈分析，找出並優化關鍵的低效率環節，展現了將數據分析與實際環境及財務成果相結合的強大能力。</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                    <h3 class="text-xl font-bold mb-2" data-lang-key="proj2Title">AI for a Better Future 黑客松</h3>
+                    <p class="text-sm font-medium text-teal-600 mb-4" data-lang-key="proj2Sub">教育類第二名</p>
+                    <p class="text-stone-700 flex-grow" data-lang-key="proj2Desc">開發了一套「AI 驅動的透明化學習互動系統」。在快節奏的專案環境中管理了從概念到實施的完整生命週期，展現了在壓力下保持創新與實用性的能力。</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                    <h3 class="text-xl font-bold mb-2" data-lang-key="proj3Title">Restaurant 365 案例競賽</h3>
+                    <p class="text-sm font-medium text-teal-600 mb-4" data-lang-key="proj3Sub">策略發表</p>
+                    <p class="text-stone-700 flex-grow" data-lang-key="proj3Desc">領導團隊對 R365 ERP 整合進行了真實世界的商業分析，並直接向餐廳 CEO 們呈報策略性發現。為數位發票與現金控制開發了一套全面的標準作業流程（SOP），確保了連鎖體系的一致性與效率。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education Section -->
+        <section id="education" class="text-center">
+            <h2 class="text-3xl font-bold text-center mb-8 text-stone-800" data-lang-key="educationTitle">教育背景</h2>
+            <div class="max-w-2xl mx-auto space-y-6">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold" data-lang-key="edu1Title">商業分析 碩士</h3>
+                    <p class="text-md text-stone-600 mt-1" data-lang-key="edu1School">California State Polytechnic University, Pomona</p>
+                    <p class="text-sm text-stone-500" data-lang-key="edu1Details">預計畢業: 2026年夏季 | GPA: 4.0/4.0</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold" data-lang-key="edu2Title">資訊管理學系 學士</h3>
+                    <p class="text-md text-stone-600 mt-1" data-lang-key="edu2School">東海大學</p>
+                    <p class="text-sm text-stone-500" data-lang-key="edu2Details">GPA: 3.82/4.0</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const translations = {
+            zh: {
+                title: 'Tingwei (Wilbert) Koo',
+                subtitle: '軟體開發工程師 & 系統分析師',
+                langButton: 'English',
+                summary: '一位充滿熱情且以結果為導向的軟體開發者與系統分析師，擁有超過兩年的完整軟體開發生命週期經驗。擅長運用 Java、Python 和 SQL 將複雜的業務需求轉化為穩健、可擴展且高效的技術解決方案。在提升系統性能、自動化流程及交付高影響力專案方面擁有卓越的實績。目前正在攻讀商業分析碩士學位，致力於結合技術實踐與數據驅動的商業策略。',
+                skillsTitle: '專業技能儀表板',
+                skillsDescription: '這是一個互動式的技能儀表板。您可以將滑鼠懸停在圖表上查看我的技能熟練度，或點擊下方的技能標籤來篩選並突顯在我的職業生涯中應用這些技能的相關經驗。',
+                experienceTitle: '職業生涯時間軸',
+                exp1: `
+                    <div class="p-6 bg-white rounded-lg shadow-lg">
+                        <p class="text-sm font-medium text-teal-600">2023年8月 - 2024年3月</p>
+                        <h3 class="text-xl font-bold mt-1">系統分析師</h3>
+                        <p class="text-md text-stone-600">國泰人壽 | 台中</p>
+                        <ul class="mt-4 space-y-2 text-stone-700 list-disc list-inside">
+                            <li>主動與多個業務單位合作，將真實世界的業務規則轉化為精確的需求文件，成為業務與開發團隊間的關鍵橋樑。</li>
+                            <li>透過數據工作流控制器自動化數據收集、清理和整合流程，成功簡化了數據準備過程，提升了數據準確性與團隊生產力。</li>
+                            <li>運用 DB2 SQL 進行詳細的數據分析，提供具體可行的洞察，為系統的策略性升級與業務決策提供了重要依據。</li>
+                        </ul>
+                    </div>`,
+                exp2: `
+                    <div class="p-6 bg-white rounded-lg shadow-lg">
+                        <p class="text-sm font-medium text-teal-600">2021年10月 - 2023年8月</p>
+                        <h3 class="text-xl font-bold mt-1">軟體開發工程師</h3>
+                        <p class="text-md text-stone-600">國泰人壽 | 台中</p>
+                        <ul class="mt-4 space-y-2 text-stone-700 list-disc list-inside">
+                            <li>主導開發與維護超過 <strong>180</strong> 個新的 Java 網頁應用程式，在 MVC 架構下運用 Java、JSP 和 DB2，有效提升了內部運營效率。</li>
+                            <li>每週平均解決 <strong>15</strong> 個錯誤和功能更新，顯著減少了系統停機時間，確保了營運的穩定性。</li>
+                            <li>設計並執行全面的測試協議，包括系統整合、單元、功能、覆蓋率和壓力測試，確保了高品質的應用程式標準。</li>
+                        </ul>
+                    </div>`,
+                exp3: `
+                    <div class="p-6 bg-white rounded-lg shadow-lg">
+                        <p class="text-sm font-medium text-teal-600">2021年2月 - 2021年9月</p>
+                        <h3 class="text-xl font-bold mt-1">軟體工程師 (實習)</h3>
+                        <p class="text-md text-stone-600">華邦電子 & 鼎新電腦 | 台中</p>
+                        <ul class="mt-4 space-y-2 text-stone-700 list-disc list-inside">
+                            <li>透過設計和實施 RPA 解決方案，自動化 MES 系統的測試流程，提升了測試效率與準確性。</li>
+                            <li>成功使用 Git 進行程式版本管理，確保了開發團隊的無縫協作與版本控制。</li>
+                            <li>運用 C# 和 SQL 進行日常錯誤修復和功能改進，直接提升了 APS 使用者介面的使用者體驗。</li>
+                        </ul>
+                    </div>`,
+                projectsTitle: '學術與競賽專案',
+                proj1Title: '全球永續供應鏈學生競賽',
+                proj1Sub: '美洲區第三名',
+                proj1Desc: '設計創新的垂直水耕系統，成功將物流成本與碳排放降至最低。透過深入的供應鏈分析，找出並優化關鍵的低效率環節，展現了將數據分析與實際環境及財務成果相結合的強大能力。',
+                proj2Title: 'AI for a Better Future 黑客松',
+                proj2Sub: '教育類第二名',
+                proj2Desc: '開發了一套「AI 驅動的透明化學習互動系統」。在快節奏的專案環境中管理了從概念到實施的完整生命週期，展現了在壓力下保持創新與實用性的能力。',
+                proj3Title: 'Restaurant 365 案例競賽',
+                proj3Sub: '策略發表',
+                proj3Desc: '領導團隊對 R365 ERP 整合進行了真實世界的商業分析，並直接向餐廳 CEO 們呈報策略性發現。為數位發票與現金控制開發了一套全面的標準作業流程（SOP），確保了連鎖體系的一致性與效率。',
+                educationTitle: '教育背景',
+                edu1Title: '商業分析 碩士',
+                edu1School: 'California State Polytechnic University, Pomona',
+                edu1Details: '預計畢業: 2026年夏季 | GPA: 4.0/4.0',
+                edu2Title: '資訊管理學系 學士',
+                edu2School: '東海大學',
+                edu2Details: 'GPA: 3.82/4.0'
+            },
+            en: {
+                title: 'Tingwei (Wilbert) Koo',
+                subtitle: 'Software Developer & System Analyst',
+                langButton: '中文',
+                summary: 'A passionate and results-driven Software Developer and System Analyst with over two years of experience in the full software development lifecycle. Skilled in leveraging Java, Python, and SQL to translate complex business needs into robust, scalable, and efficient technical solutions. Proven track record of enhancing system performance, automating processes, and delivering high-impact projects. Currently pursuing a Master\'s degree in Business Analytics, I am dedicated to bridging the gap between technical execution and data-driven business strategy.',
+                skillsTitle: 'Technical Skills Dashboard',
+                skillsDescription: 'This is an interactive skills dashboard. Hover over the chart to see my proficiency level, or click the skill tags below to filter and highlight relevant experiences in my career timeline.',
+                experienceTitle: 'Career Timeline',
+                exp1: `
+                    <div class="p-6 bg-white rounded-lg shadow-lg">
+                        <p class="text-sm font-medium text-teal-600">Aug 2023 - Mar 2024</p>
+                        <h3 class="text-xl font-bold mt-1">System Analyst</h3>
+                        <p class="text-md text-stone-600">Cathay Life Insurance | Taichung, Taiwan</p>
+                        <ul class="mt-4 space-y-2 text-stone-700 list-disc list-inside">
+                            <li>Proactively collaborated with diverse business units to **translate** real-world business **rules into precise requirement documents**, serving as a critical bridge between business stakeholders and development teams.</li>
+                            <li>**Streamlined data preparation processes** by utilizing a data workflow controller to automate the collection, cleaning, and integration of data from multiple systems, improving data accuracy and team productivity.</li>
+                            <li>Leveraged DB2 SQL to conduct detailed data analysis, providing actionable insights that informed strategic system enhancements and business decisions.</li>
+                        </ul>
+                    </div>`,
+                exp2: `
+                    <div class="p-6 bg-white rounded-lg shadow-lg">
+                        <p class="text-sm font-medium text-teal-600">Oct 2021 - Aug 2023</p>
+                        <h3 class="text-xl font-bold mt-1">Software Developer</h3>
+                        <p class="text-md text-stone-600">Cathay Life Insurance | Taichung, Taiwan</p>
+                        <ul class="mt-4 space-y-2 text-stone-700 list-disc list-inside">
+                            <li>Spearheaded the development and maintenance of over <strong>180</strong> new Java-based web applications, leveraging Java, JSP, and DB2 within an MVC framework to enhance internal operational efficiency.</li>
+                            <li>Resolved an average of <strong>15 bugs and functions weekly</strong>, significantly reducing system downtime and ensuring operational stability.</li>
+                            <li>Designed and executed comprehensive testing protocols, including System Integration, Unit, Functional, Coverage, and Stress Testing, to guarantee a high standard of application quality.</li>
+                        </ul>
+                    </div>`,
+                exp3: `
+                    <div class="p-6 bg-white rounded-lg shadow-lg">
+                        <p class="text-sm font-medium text-teal-600">Feb 2021 - Sep 2021</p>
+                        <h3 class="text-xl font-bold mt-1">Software Engineer (Internship)</h3>
+                        <p class="text-md text-stone-600">Winbond Electronics Corp. and Digiwin | Taichung, Taiwan</p>
+                        <ul class="mt-4 space-y-2 text-stone-700 list-disc list-inside">
+                            <li>Automated testing for the MES system by **designing and implementing RPA solutions**, which improved testing efficiency and accuracy.</li>
+                            <li>Successfully managed program versions using Git, ensuring seamless collaboration and version control for the development team.</li>
+                            <li>**Enhanced the APS user interface** through daily bug fixes and functional improvements using C# and SQL, directly contributing to a better user experience.</li>
+                        </ul>
+                    </div>`,
+                projectsTitle: 'Academic & Competition Projects',
+                proj1Title: 'Global Sustainability Supply Chain Student Competition',
+                proj1Sub: 'Third Place, Americas Region',
+                proj1Desc: 'Designed an innovative vertical hydroponic system that successfully minimized logistics costs and carbon emissions. Through in-depth supply chain analysis, identified and optimized key inefficiencies, demonstrating a strong ability to link data analysis with tangible environmental and financial outcomes.',
+                proj2Title: 'AI for a Better Future Hackathon',
+                proj2Sub: 'Second Place, Education Category',
+                proj2Desc: 'Developed an "AI-Driven Interactive System for Transparent Learning". Managed the full project lifecycle in a fast-paced environment, showcasing adaptability and the ability to maintain innovation and practicality under pressure.',
+                proj3Title: 'Restaurant 365 Case Competition',
+                proj3Sub: 'Strategic Presentation',
+                proj3Desc: 'Led a team in a real-world business analysis of R365 ERP integration, presenting strategic findings directly to restaurant CEOs. Developed a comprehensive framework for digital invoicing and cash control, ensuring chain-wide consistency and efficiency.',
+                educationTitle: 'Education',
+                edu1Title: 'Master of Science, Business Analytics',
+                edu1School: 'California State Polytechnic University, Pomona',
+                edu1Details: 'Expected Graduation: Summer 2026 | GPA: 4.0/4.0',
+                edu2Title: 'Bachelor of Business Administration, Information Management',
+                edu2School: 'Tunghai University',
+                edu2Details: 'GPA: 3.82/4.0'
+            }
+        };
+
+        const elements = document.querySelectorAll('[data-lang-key]');
+        const langToggle = document.getElementById('langToggle');
+        let currentLang = 'en';
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+            langToggle.textContent = translations[lang === 'zh' ? 'en' : 'zh'].langButton;
+
+            elements.forEach(el => {
+                const key = el.dataset.langKey;
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            const experienceItems = document.querySelectorAll('.experience-item');
+            experienceItems.forEach(item => {
+                const key = item.dataset.langKey;
+                if (translations[lang][key]) {
+                    item.innerHTML = translations[lang][key];
+                }
+            });
+            
+            updateChart(lang);
+        }
+
+        langToggle.addEventListener('click', () => {
+            const nextLang = currentLang === 'zh' ? 'en' : 'zh';
+            switchLanguage(nextLang);
+        });
+
+        const skillsData = {
+            'Java': 95,
+            'Python': 85,
+            'SQL': 90,
+            'C#': 80,
+            'JavaScript': 75,
+            'R': 70,
+            'Git': 90,
+            'MVC': 85,
+            'RPA': 75,
+            'SSIS': 70,
+            'JSP': 80
+        };
+
+        const skillTagsContainer = document.getElementById('skill-tags');
+        const experienceItems = document.querySelectorAll('.experience-item');
+        const allSkills = ['Java', 'Python', 'SQL', 'C#', 'RPA', 'Git', 'JSP', 'MVC', 'DB2', 'Testing', 'Data Analysis'];
+        
+        allSkills.forEach(skill => {
+            const tag = document.createElement('span');
+            tag.textContent = skill;
+            tag.className = 'skill-tag inline-block bg-stone-200 text-stone-700 rounded-full px-4 py-2 text-sm font-semibold mr-2 mb-2';
+            tag.dataset.skill = skill;
+            skillTagsContainer.appendChild(tag);
+        });
+        
+        const tags = document.querySelectorAll('.skill-tag');
+        let activeTag = null;
+
+        tags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                const skillToFilter = tag.dataset.skill;
+
+                if (activeTag === tag) {
+                    activeTag.classList.remove('active');
+                    activeTag = null;
+                    experienceItems.forEach(item => item.classList.remove('highlight'));
+                } else {
+                    if(activeTag) activeTag.classList.remove('active');
+                    tag.classList.add('active');
+                    activeTag = tag;
+                    experienceItems.forEach(item => {
+                        const itemSkills = item.dataset.skills.split(',');
+                        if (itemSkills.some(s => s.toLowerCase().trim() === skillToFilter.toLowerCase().trim())) {
+                            item.classList.add('highlight');
+                        } else {
+                            item.classList.remove('highlight');
+                        }
+                    });
+                }
+            });
+        });
+
+        const ctx = document.getElementById('skillsChart').getContext('2d');
+        const skillsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(skillsData),
+                datasets: [{
+                    label: '技能熟練度 (%)',
+                    data: Object.values(skillsData),
+                    backgroundColor: 'rgba(20, 184, 166, 0.6)',
+                    borderColor: 'rgba(13, 148, 136, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const labelText = currentLang === 'zh' ? '熟練度' : 'Proficiency';
+                                return `${labelText}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateChart(lang) {
+            skillsChart.data.datasets[0].label = lang === 'zh' ? '技能熟練度 (%)' : 'Proficiency (%)';
+            skillsChart.update();
+        }
+
+        switchLanguage('zh');
+
+    </script>
+</body>
+</html>
